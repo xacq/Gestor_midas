@@ -1,0 +1,115 @@
+{% extends "base/base.html" %}
+{% block title %}Dashboard Gerencial | MIDAS{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h2 class="h4 mb-1">Dashboard Gerencial</h2>
+      <div class="muted">Resumen ejecutivo de documentos publicados y alertas.</div>
+    </div>
+    <span class="badge text-bg-light bg-opacity-10 border border-white border-opacity-10 text-light">
+      {{ today }} · Ventana 30 días
+    </span>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+      <div class="card-inner">
+        <div class="muted small">Publicados</div>
+        <div class="fs-3 fw-semibold">{{ kpis.published_total }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card-inner">
+        <div class="muted small">Contratos activos</div>
+        <div class="fs-3 fw-semibold">{{ kpis.contracts_active }}</div>
+        <div class="muted small mt-1">Por vencer (30d): {{ kpis.contracts_expiring_30 }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card-inner">
+        <div class="muted small">Monto contratos (sum)</div>
+        <div class="fs-3 fw-semibold">${{ kpis.contracts_amount_sum }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div class="card-inner">
+        <div class="fw-semibold mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Contratos por vencer (≤ 30 días)</div>
+
+        {% if expiring_list %}
+          <div class="table-responsive">
+            <table class="table table-sm table-dark align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Fin</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for d in expiring_list %}
+                <tr>
+                  <td class="text-truncate" style="max-width: 240px;">{{ d.title|default:"(Sin título)" }}</td>
+                  <td>{{ d.metadata.date_end }}</td>
+                  <td class="text-end">
+                    <a class="btn btn-sm btn-outline-light border border-white border-opacity-10"
+                       href="{% url 'document_detail' d.id %}">
+                      Ver
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="muted small">No hay contratos por vencer en la ventana actual.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card-inner">
+        <div class="fw-semibold mb-2"><i class="bi bi-clock-history me-1"></i>Publicaciones recientes</div>
+
+        {% if recent_published %}
+          <div class="table-responsive">
+            <table class="table table-sm table-dark align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Tipo</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for d in recent_published %}
+                <tr>
+                  <td class="text-truncate" style="max-width: 240px;">{{ d.title|default:"(Sin título)" }}</td>
+                  <td>{{ d.document_type.name }}</td>
+                  <td class="text-end">
+                    <a class="btn btn-sm btn-outline-light border border-white border-opacity-10"
+                       href="{% url 'document_detail' d.id %}">
+                      Ver
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="muted small">Aún no hay documentos publicados.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card-inner mt-3">
+    <div class="fw-semibold mb-2"><i class="bi bi-receipt me-1"></i>Órdenes de compra</div>
+    <div class="muted small">Total: {{ kpis.po_total }} · Monto sum: ${{ kpis.po_amount_sum }}</div>
+  </div>
+{% endblock %}

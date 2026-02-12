@@ -1,0 +1,88 @@
+{% extends "base/base.html" %}
+{% block title %}Documentos | MIDAS{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+    <div>
+      <h2 class="h4 mb-1">Documentos publicados</h2>
+      <div class="muted">Filtra por tipo o busca por título / referencia / partes.</div>
+    </div>
+    <span class="badge text-bg-light bg-opacity-10 border border-white border-opacity-10 text-light">
+      <i class="bi bi-eye me-1"></i>Solo lectura
+    </span>
+  </div>
+
+  <div class="card-inner mb-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-6">
+        <label class="form-label">Búsqueda</label>
+        <input class="form-control" name="q" value="{{ q }}" placeholder="Ej: contrato, proveedor, referencia, partes...">
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label">Tipo de documento</label>
+        <select class="form-select" name="type">
+          <option value="">Todos</option>
+          {% for t in types %}
+            <option value="{{ t.document_type__id }}" {% if selected_type == t.document_type__id|stringformat:"s" %}selected{% endif %}>
+              {{ t.document_type__name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-md-2 d-grid">
+        <button class="btn btn-primary" type="submit">
+          <i class="bi bi-search me-1"></i>Buscar
+        </button>
+      </div>
+    </form>
+  </div>
+<div class="muted small mb-3">
+  {{ documents|length }} documentos encontrados
+</div>
+  {% if documents %}
+    <div class="row g-3">
+      {% for d in documents %}
+        <div class="col-12">
+          <div class="card-inner">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <div class="fw-semibold">
+                  <i class="bi bi-file-earmark-pdf me-1"></i>
+                  {{ d.title|default:"(Sin título)" }}
+                </div>
+                <div class="muted small mt-1">
+                  Tipo: <span class="text-light">{{ d.document_type.name }}</span>
+                  · Estado: <span class="text-light">{{ d.get_status_display }}</span>
+                  · Cargado por: <span class="text-light">{{ d.created_by.username }}</span>
+                </div>
+              </div>
+
+              <a class="btn btn-sm btn-outline-light border border-white border-opacity-10"
+                 href="{% url 'document_detail' d.pk %}">
+                Ver <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+
+            {% if d.metadata %}
+              <div class="row g-2 mt-2 muted small">
+                {% if d.metadata.reference_number %}
+                  <div class="col-12 col-md-4"><i class="bi bi-hash me-1"></i>{{ d.metadata.reference_number }}</div>
+                {% endif %}
+                {% if d.metadata.parties %}
+                  <div class="col-12 col-md-8"><i class="bi bi-people me-1"></i>{{ d.metadata.parties|truncatechars:110 }}</div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card-inner">
+      <div class="fw-semibold mb-1">Sin resultados</div>
+      <div class="muted small">Prueba con otro término o cambia el filtro de tipo.</div>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base/base.html" %}
+{% block title %}Ingresar | MIDAS{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+    <div>
+      <h2 class="h4 mb-1">Iniciar sesión</h2>
+      <div class="muted">Ingresa con tus credenciales institucionales.</div>
+    </div>
+    <div class="text-end">
+      <span class="badge text-bg-primary bg-opacity-75">
+        <i class="bi bi-lock-fill me-1"></i>Acceso restringido
+      </span>
+    </div>
+  </div>
+
+  <div class="card-inner">
+    {% if form.errors %}
+      <div class="alert alert-danger">
+        <div class="fw-semibold mb-1">No se pudo iniciar sesión</div>
+        <div class="small">Verifica tu usuario y contraseña e inténtalo nuevamente.</div>
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label class="form-label">Usuario</label>
+        <div class="input-group">
+          <span class="input-group-text bg-transparent text-light border border-white border-opacity-10" style="border-radius:12px 0 0 12px;">
+            <i class="bi bi-person"></i>
+          </span>
+          <input
+            type="text"
+            name="username"
+            class="form-control"
+            placeholder="usuario"
+            autocomplete="username"
+            required
+            autofocus
+            value="{{ form.username.value|default_if_none:'' }}"
+            style="border-radius:0 12px 12px 0;"
+          >
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Contraseña</label>
+        <div class="input-group">
+          <span class="input-group-text bg-transparent text-light border border-white border-opacity-10" style="border-radius:12px 0 0 12px;">
+            <i class="bi bi-key"></i>
+          </span>
+          <input
+            type="password"
+            name="password"
+            class="form-control"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+            style="border-radius:0 12px 12px 0;"
+          >
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-between mt-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="rememberMe">
+          <label class="form-check-label muted" for="rememberMe">
+            Mantener sesión
+          </label>
+        </div>
+        <div class="small">
+          {# si luego habilitas reset, esto ya funciona #}
+          <a href="/accounts/password_reset/">¿Olvidaste tu contraseña?</a>
+        </div>
+      </div>
+
+      <div class="d-grid mt-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-box-arrow-in-right me-1"></i>
+          Entrar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="muted small mt-3">
+    Si no tienes credenciales, solicita acceso al administrador del sistema.
+  </div>
+{% endblock %}

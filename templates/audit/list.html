@@ -1,0 +1,60 @@
+{% extends "base/base.html" %}
+{% block title %}Bitácora | MIDAS{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h2 class="h4 mb-1">Bitácora de acciones</h2>
+      <div class="muted">Trazabilidad (DLP): quién hizo qué, cuándo y sobre qué documento.</div>
+    </div>
+  </div>
+
+  <div class="card-inner mb-3">
+    <form class="row g-2" method="get">
+      <div class="col-12 col-md-6">
+        <input class="form-control" name="q" value="{{ q }}" placeholder="Buscar por usuario, documento o mensaje">
+      </div>
+      <div class="col-12 col-md-4">
+        <input class="form-control" name="action" value="{{ action }}" placeholder="Acción (UPLOAD, PUBLISH, ...)">
+      </div>
+      <div class="col-12 col-md-2 d-grid">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Filtrar</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-inner">
+    <div class="table-responsive">
+      <table class="table table-sm table-dark align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Acción</th>
+            <th>Documento</th>
+            <th>Mensaje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in logs %}
+            <tr>
+              <td class="muted small">{{ l.created_at }}</td>
+              <td>{{ l.actor.username|default:"system" }}</td>
+              <td><span class="badge text-bg-light bg-opacity-10 border border-white border-opacity-10 text-light">{{ l.action }}</span></td>
+              <td class="text-truncate" style="max-width:220px;">
+                {% if l.document %}
+                  <a href="{% url 'document_review' l.document.id %}">{{ l.document.title|default:"(sin título)" }}</a>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+              <td class="text-truncate" style="max-width:280px;">{{ l.message }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="muted small">No hay registros.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

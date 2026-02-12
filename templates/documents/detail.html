@@ -1,0 +1,86 @@
+{% extends "base/base.html" %}
+{% block title %}Detalle | MIDAS{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+    <div>
+      <h2 class="h4 mb-1">{{ doc.title|default:"(Sin título)" }}</h2>
+      <div class="muted">
+        {{ doc.document_type.name }} · Publicado · ID #{{ doc.id }}
+      </div>
+    </div>
+    <a class="btn btn-sm btn-outline-light border border-white border-opacity-10" href="/documents/">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-5">
+      <div class="card-inner">
+        <div class="fw-semibold mb-2"><i class="bi bi-info-circle me-1"></i>Metadatos</div>
+
+        {% if doc.metadata %}
+          <div class="muted small">
+            {% if doc.metadata.reference_number %}
+              <div class="mb-2"><span class="text-light">Referencia:</span> {{ doc.metadata.reference_number }}</div>
+            {% endif %}
+            {% if doc.metadata.parties %}
+              <div class="mb-2"><span class="text-light">Partes:</span> {{ doc.metadata.parties }}</div>
+            {% endif %}
+            {% if doc.metadata.date_main %}
+              <div class="mb-2"><span class="text-light">Fecha principal:</span> {{ doc.metadata.date_main }}</div>
+            {% endif %}
+            {% if doc.metadata.date_start %}
+              <div class="mb-2"><span class="text-light">Inicio:</span> {{ doc.metadata.date_start }}</div>
+            {% endif %}
+            {% if doc.metadata.date_end %}
+              <div class="mb-2"><span class="text-light">Fin:</span> {{ doc.metadata.date_end }}</div>
+            {% endif %}
+            {% if doc.metadata.amount %}
+              <div class="mb-2"><span class="text-light">Monto:</span> {{ doc.metadata.amount }}</div>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="muted small">Aún no hay metadatos registrados.</div>
+        {% endif %}
+
+        <hr class="border border-white border-opacity-10 my-3">
+
+        <div class="fw-semibold mb-2"><i class="bi bi-clock-history me-1"></i>Versiones</div>
+        <div class="muted small">
+          {% for v in doc.versions.all %}
+            <div class="d-flex justify-content-between">
+              <div>v{{ v.version_number }}</div>
+              <div>{{ v.uploaded_at|date:"Y-m-d H:i" }}</div>
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if latest_version %}
+          <div class="d-grid mt-3">
+            <a class="btn btn-primary" href="{{ latest_version.file.url }}" target="_blank" rel="noopener">
+              <i class="bi bi-download me-1"></i>Abrir/Descargar PDF
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <div class="card-inner">
+        <div class="fw-semibold mb-2"><i class="bi bi-file-earmark-pdf me-1"></i>Vista previa</div>
+
+        {% if latest_version %}
+          <div class="ratio ratio-4x3">
+            <iframe src="{{ latest_version.file.url }}" style="border:0; border-radius:12px;"></iframe>
+          </div>
+          <div class="muted small mt-2">
+            Si tu navegador bloquea el visor, usa “Abrir/Descargar PDF”.
+          </div>
+        {% else %}
+          <div class="muted small">No hay archivo PDF asociado.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
