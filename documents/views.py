@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.shortcuts import redirect, render
+from django.http import HttpResponseNotAllowed
 from .forms import DocumentUploadForm
 from .models import Document, DocumentVersion
 from documents.services.pipeline import process_document
@@ -132,6 +133,23 @@ def drafts_list(request):
         .order_by("-created_at")
     )
     return render(request, "documents/drafts_list.html", {"documents": qs})
+
+
+@staff_member_required
+def delete_document(request, pk: int):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    doc = get_object_or_404(Document, pk=pk)
+
+    # Elimina los archivos físicos antes de borrar los registros
+    for version in doc.versions.all():
+        if version.file:
+            version.file.delete(save=False)
+
+    doc.delete()
+    messages.success(request, "Documento eliminado correctamente.")
+    return redirect("documents_drafts")
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages

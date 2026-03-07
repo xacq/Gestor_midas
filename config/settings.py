@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "audit",
     "core",
     "crispy_forms", "crispy_bootstrap5",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -83,6 +84,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            # Evita errores de "database is locked" en escrituras concurrentes durante desarrollo
+            'timeout': 20,
+        },
     }
 }
 

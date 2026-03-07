@@ -46,6 +46,9 @@ class Document(models.Model):
     is_ocr = models.BooleanField(default=False)
     ocr_confidence = models.FloatField(null=True, blank=True)
 
+    # Resumen generado por NLP (extractivo, offline)
+    summary = models.TextField(blank=True, default="")
+
     class Meta:
         ordering = ["-created_at"]
 

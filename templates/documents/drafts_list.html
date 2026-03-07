@@ -35,6 +35,13 @@
                 href="{% url 'document_review' d.id %}">
                 Revisar <i class="bi bi-arrow-right ms-1"></i>
                 </a>
+                <form method="post" action="{% url 'document_delete' d.id %}"
+                  onsubmit="return confirm('¿Eliminar este documento y sus archivos?');">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger" type="submit">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </form>
               </div>
             </div>
 
