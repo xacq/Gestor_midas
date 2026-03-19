@@ -82,12 +82,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {
-            # Evita errores de "database is locked" en escrituras concurrentes durante desarrollo
-            'timeout': 20,
-        },
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'midas_gestor',
+        "USER": "postgres",
+        "PASSWORD": "123Qwerty$%&",
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
