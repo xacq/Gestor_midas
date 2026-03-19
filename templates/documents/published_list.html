@@ -66,8 +66,8 @@
       </div>
 
       {% if d.summary %}
-      <div class="muted small mt-2" style="white-space: pre-line;">
-        <i class="bi bi-card-text me-1"></i>{{ d.summary }}
+      <div class="muted small mt-2">
+        <i class="bi bi-card-text me-1"></i>{{ d.summary|truncatechars:200 }}
       </div>
       {% endif %}
 
@@ -85,6 +85,34 @@
   </div>
   {% endfor %}
 </div>
+{% if documents.has_other_pages %}
+<div class="d-flex justify-content-center mt-4">
+  <nav>
+    <ul class="pagination pagination-sm">
+      {% if documents.has_previous %}
+        <li class="page-item">
+          <a class="page-link bg-dark text-light border-secondary" href="?page={{ documents.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+      {% endif %}
+
+      <li class="page-item disabled">
+        <span class="page-link bg-dark text-light border-secondary">Página {{ documents.number }} de {{ documents.paginator.num_pages }}</span>
+      </li>
+
+      {% if documents.has_next %}
+        <li class="page-item">
+          <a class="page-link bg-dark text-light border-secondary" href="?page={{ documents.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% endif %}
+
 {% else %}
 <div class="card-inner">
   <div class="fw-semibold mb-1">Sin resultados</div>

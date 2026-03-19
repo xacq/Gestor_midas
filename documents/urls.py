@@ -8,7 +8,8 @@ from .views import (
     upload_document,
     drafts_list,
     delete_document,
-    review_document,  # <-- IMPORTANTE
+    review_document,
+    document_download,
 )
 
 urlpatterns = [
@@ -18,6 +19,7 @@ urlpatterns = [
     path("review/<int:pk>/", review_document, name="document_review"),
     path("", published_list, name="documents_list"),
     path("<int:pk>/", document_detail, name="document_detail"),
+    path("<int:pk>/download/", document_download, name="document_download"),
     path("manager/", manager_dashboard, name="manager_dashboard"),
     path("audit/", audit_log_list, name="audit_log"),
 ]

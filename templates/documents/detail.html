@@ -62,9 +62,9 @@
           {% endfor %}
         </div>
 
-        {% if latest_version %}
+        {% if doc.id %}
           <div class="d-grid mt-3">
-            <a class="btn btn-primary" href="{{ latest_version.file.url }}" target="_blank" rel="noopener">
+            <a class="btn btn-primary" href="{% url 'document_download' doc.id %}" target="_blank" rel="noopener">
               <i class="bi bi-download me-1"></i>Abrir/Descargar PDF
             </a>
           </div>

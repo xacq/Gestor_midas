@@ -5,7 +5,13 @@ from django.shortcuts import render
 from django.utils import timezone
 from .models import Document
 
-@login_required
+from django.contrib.auth.decorators import user_passes_test
+from .permissions import is_gerencia
+
+def can_access_dashboard(user):
+    return user.is_staff or is_gerencia(user)
+
+@user_passes_test(can_access_dashboard)
 def manager_dashboard(request):
     today = timezone.localdate()
     in_30 = today + timedelta(days=30)

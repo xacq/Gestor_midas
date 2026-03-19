@@ -118,6 +118,7 @@ class AuditAction(models.TextChoices):
     DISABLE = "DISABLE", "Inhabilitar documento"
     LOGIN = "LOGIN", "Inicio de sesión"
     LOGOUT = "LOGOUT", "Cierre de sesión"
+    DOWNLOAD = "DOWNLOAD", "Descarga de documento"
 
 
 class AuditLog(models.Model):

@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -6,7 +7,7 @@ from django.shortcuts import redirect
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.http import HttpResponseNotAllowed
 from .forms import DocumentUploadForm
 from .models import Document, DocumentVersion
@@ -42,8 +43,12 @@ def published_list(request):
         .order_by("document_type__name")
     )
 
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        "documents": qs[:200],  # límite simple (luego metemos chatcpaginación)
+        "documents": page_obj,
         "q": q,
         "types": types,
         "selected_type": doc_type,
@@ -68,13 +73,39 @@ def document_detail(request, pk: int):
     )
 
 
+@login_required
+def document_download(request, pk: int):
+    """
+    Vista auditable para descarga de documentos.
+    Registra el evento y luego redirige al archivo físico.
+    """
+    doc = get_object_or_404(Document, pk=pk, enabled=True)
+    version = doc.versions.first()
+    if not version or not version.file:
+        messages.error(request, "El documento no tiene un archivo asociado.")
+        return redirect("document_detail", pk=pk)
+
+    # Auditoría de descarga
+    from documents.services.audit import log_event
+    from documents.models import AuditAction
+    log_event(
+        request=request,
+        action=AuditAction.DOWNLOAD,
+        actor=request.user,
+        document=doc,
+        message=f"Descarga de archivo: {version.file_name}",
+        metadata={"version": version.version_number, "filename": version.file_name}
+    )
+
+    return redirect(version.file.url)
+
+
 @staff_member_required
 def upload_document(request):
     if request.method == "POST":
         form = DocumentUploadForm(request.POST, request.FILES)
 
         if not form.is_valid():
-            # IMPORTANTE: renderiza con errores, NO intentes cleaned_data
             messages.error(request, "Revisa el formulario. Hay campos inválidos o faltantes.")
             return render(request, "documents/upload.html", {"form": form})
 
@@ -121,9 +152,6 @@ def upload_document(request):
     return render(request, "documents/upload.html", {"form": form})
 
 
-
-from django.contrib.admin.views.decorators import staff_member_required
-
 @staff_member_required
 def drafts_list(request):
     qs = (
@@ -132,7 +160,11 @@ def drafts_list(request):
         .filter(status=Document.Status.DRAFT)
         .order_by("-created_at")
     )
-    return render(request, "documents/drafts_list.html", {"documents": qs})
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "documents/drafts_list.html", {"documents": page_obj})
 
 
 @staff_member_required
@@ -142,7 +174,6 @@ def delete_document(request, pk: int):
 
     doc = get_object_or_404(Document, pk=pk)
 
-    # Elimina los archivos físicos antes de borrar los registros
     for version in doc.versions.all():
         if version.file:
             version.file.delete(save=False)
@@ -150,12 +181,6 @@ def delete_document(request, pk: int):
     doc.delete()
     messages.success(request, "Documento eliminado correctamente.")
     return redirect("documents_drafts")
-
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, render
-from .models import Document, DocumentMetadata
-from .forms_review import DocumentReviewForm
 
 
 @staff_member_required
@@ -167,7 +192,6 @@ def review_document(request, pk: int):
     meta, _ = DocumentMetadata.objects.get_or_create(document=doc)
     latest_version = doc.versions.first()
 
-    # Inicial (GET)
     if request.method == "GET":
         form = DocumentReviewForm(initial={
             "title": doc.title,
@@ -188,7 +212,6 @@ def review_document(request, pk: int):
             "form": form,
         })
 
-    # POST (Guardar / Validar / Publicar)
     form = DocumentReviewForm(request.POST)
     if not form.is_valid():
         messages.error(request, "Revisa los campos: hay datos inválidos.")
@@ -198,6 +221,10 @@ def review_document(request, pk: int):
             "latest_version": latest_version,
             "form": form,
         })
+
+    from documents.services.audit import log_event
+    from documents.models import AuditAction
+
     prev_enabled = doc.enabled
     form.apply_to_models(doc, meta)
     if prev_enabled != doc.enabled:
@@ -224,9 +251,6 @@ def review_document(request, pk: int):
 
     doc.save()
 
-    from documents.services.audit import log_event
-    from documents.models import AuditAction
-
     if action == "validate":
         log_event(
             request=request,
@@ -252,8 +276,6 @@ def review_document(request, pk: int):
             message="Revisión guardada",
         )
 
-    # enabled change (opcional)
-    # si quieres detectar enable/disable:
-    # Devolver a la misma pantalla para seguir revisando
     return redirect("document_review", pk=doc.pk)
-
+from .models import Document, DocumentMetadata
+from .forms_review import DocumentReviewForm
