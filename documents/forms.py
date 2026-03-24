@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import DocumentType
+from .services.document_types import get_active_document_types_queryset
 
 
 class DocumentUploadForm(forms.Form):
@@ -11,8 +12,9 @@ class DocumentUploadForm(forms.Form):
     )
 
     document_type = forms.ModelChoiceField(
-        queryset=DocumentType.objects.filter(is_active=True),
+        queryset=DocumentType.objects.none(),
         label="Tipo de documento",
+        empty_label="Selecciona un tipo",
         widget=forms.Select(attrs={"class": "form-select"})
     )
 
@@ -20,6 +22,10 @@ class DocumentUploadForm(forms.Form):
         label="Archivo PDF",
         widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": "application/pdf"})
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["document_type"].queryset = get_active_document_types_queryset()
 
     def clean_file(self):
         f = self.cleaned_data["file"]

@@ -38,7 +38,7 @@
                 <form method="post" action="{% url 'document_delete' d.id %}"
                   onsubmit="return confirm('¿Eliminar este documento y sus archivos?');">
                   {% csrf_token %}
-                  <button class="btn btn-sm btn-outline-danger" type="submit">
+                  <button class="btn btn-danger" type="submit">
                     <i class="bi bi-trash"></i> Eliminar
                   </button>
                 </form>

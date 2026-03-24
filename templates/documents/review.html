@@ -1,6 +1,18 @@
 {% extends "base/base.html" %}
 {% block title %}Revisión | MIDAS{% endblock %}
 
+{% block extra_head %}
+<style>
+  .document-text-viewer {
+    min-height: 220px;
+    resize: vertical;
+    overflow-y: hidden;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
   <div>
@@ -39,11 +51,30 @@
       </div>
 
       {% if doc.summary %}
-      <div class="alert alert-info mt-3 mb-3"
+      <div class="alert mt-3 mb-3"
         style="background: rgba(13,202,240,.08); border-color: rgba(13,202,240,.2);">
-        <div class="fw-semibold mb-1"><i class="bi bi-card-text me-1"></i>Resumen automático</div>
-        <div class="small" style="white-space: pre-line;">{{ doc.summary }}</div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+          <div class="fw-semibold"><i class="bi bi-card-text me-1"></i>Resumen automático</div>
+          <div class="small text-info-emphasis">
+            Guardado: {{ doc.summary|length }} caracteres
+          </div>
+        </div>
+        <textarea class="form-control document-text-viewer small" readonly>{{ doc.summary }}</textarea>
+        <div class="small muted mt-2">
+          Texto extraído base: {{ doc.extracted_text|length }} caracteres.
+        </div>
       </div>
+      {% endif %}
+
+      {% if doc.extracted_text %}
+      <details class="mb-3">
+        <summary class="fw-semibold text-light" style="cursor: pointer;">
+          <i class="bi bi-file-text me-1"></i>Texto extraído completo ({{ doc.extracted_text|length }} caracteres)
+        </summary>
+        <div class="mt-2">
+          <textarea class="form-control document-text-viewer small" readonly>{{ doc.extracted_text }}</textarea>
+        </div>
+      </details>
       {% endif %}
 
       <form method="post" novalidate>
@@ -158,4 +189,31 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function resizeViewer(textarea) {
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".document-text-viewer").forEach(function (textarea) {
+      resizeViewer(textarea);
+    });
+
+    document.querySelectorAll("details").forEach(function (details) {
+      details.addEventListener("toggle", function () {
+        if (!details.open) {
+          return;
+        }
+
+        details.querySelectorAll(".document-text-viewer").forEach(function (textarea) {
+          resizeViewer(textarea);
+        });
+      });
+    });
+  });
+</script>
 {% endblock %}

@@ -126,13 +126,13 @@ def process_document(document_id: int) -> None:
     # 4) Resumen automático (NLP offline)
     if text:
         try:
-            summary = summarize_text(text, num_sentences=5)
+            summary = summarize_text(text, num_sentences=100)
             doc.summary = summary
             logger.info("Resumen generado: %d chars", len(summary))
         except Exception as exc:
             logger.error("Error al generar resumen: %s", exc, exc_info=True)
             doc.summary = ""
-    else:
+    else:   
         doc.summary = ""
         logger.warning("Sin texto para generar resumen")
 

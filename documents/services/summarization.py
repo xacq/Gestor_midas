@@ -1,15 +1,16 @@
 """
 Resumen extractivo offline usando sumy + NLTK.
 
-Funciona 100% offline después de descargar los datos de NLTK una vez.
-Usa LexRank (basado en similitud coseno entre oraciones) como algoritmo
-principal — buen balance calidad/velocidad para documentos legales/comerciales.
+Intenta usar LexRank como algoritmo principal. Si faltan dependencias
+opcionales, cae a Luhn y, como último recurso, devuelve un extracto largo
+del texto para evitar resúmenes inútilmente cortos.
 """
 from __future__ import annotations
 
 import logging
 
 logger = logging.getLogger("documents.summarization")
+FALLBACK_SUMMARY_CHARS = 1500
 
 
 def _ensure_nltk_data() -> None:
@@ -22,7 +23,17 @@ def _ensure_nltk_data() -> None:
         nltk.download("punkt_tab", quiet=True)
 
 
-def summarize_text(text: str, num_sentences: int = 5, language: str = "spanish") -> str:
+def _fallback_excerpt(text: str, max_chars: int = FALLBACK_SUMMARY_CHARS) -> str:
+    excerpt = text[:max_chars]
+    if len(text) > max_chars:
+        last_space = excerpt.rfind(" ")
+        if last_space > int(max_chars * 0.6):
+            excerpt = excerpt[:last_space]
+        excerpt += "..."
+    return excerpt
+
+
+def summarize_text(text: str, num_sentences: int = 8, language: str = "spanish") -> str:
     """
     Genera un resumen extractivo del texto usando LexRank.
 
@@ -51,6 +62,7 @@ def summarize_text(text: str, num_sentences: int = 5, language: str = "spanish")
         from sumy.parsers.plaintext import PlaintextParser
         from sumy.nlp.tokenizers import Tokenizer
         from sumy.summarizers.lex_rank import LexRankSummarizer
+        from sumy.summarizers.luhn import LuhnSummarizer
         from sumy.nlp.stemmers import Stemmer
         from sumy.utils import get_stop_words
 
@@ -66,25 +78,37 @@ def summarize_text(text: str, num_sentences: int = 5, language: str = "spanish")
             return stripped
 
         stemmer = Stemmer(language)
-        summarizer = LexRankSummarizer(stemmer)
-        summarizer.stop_words = get_stop_words(language)
+        stop_words = get_stop_words(language)
 
-        summary_sentences = summarizer(parser.document, num_sentences)
+        for algorithm_name, summarizer_class in (
+            ("LexRank", LexRankSummarizer),
+            ("Luhn", LuhnSummarizer),
+        ):
+            try:
+                summarizer = summarizer_class(stemmer)
+                summarizer.stop_words = stop_words
+                summary_sentences = list(summarizer(parser.document, num_sentences))
+                if not summary_sentences:
+                    logger.warning("%s no produjo oraciones; probando otro algoritmo", algorithm_name)
+                    continue
 
-        summary = " ".join(str(s) for s in summary_sentences)
-        logger.info(
-            "Resumen generado: %d oraciones, %d chars (de %d originales)",
-            len(list(summary_sentences)), len(summary), len(stripped),
-        )
-        return summary
+                summary = " ".join(str(sentence) for sentence in summary_sentences)
+                logger.info(
+                    "Resumen generado con %s: %d oraciones, %d chars (de %d originales)",
+                    algorithm_name, len(summary_sentences), len(summary), len(stripped),
+                )
+                return summary
+            except Exception as exc:
+                logger.warning(
+                    "Fallo %s al generar resumen: %s. Se intentará otro algoritmo.",
+                    algorithm_name,
+                    exc,
+                )
 
     except Exception as exc:
         logger.error("Error al generar resumen: %s", exc, exc_info=True)
-        # Fallback: devolver los primeros ~500 caracteres como extracto
-        fallback = stripped[:500]
-        if len(stripped) > 500:
-            # Cortar en el último espacio para no partir palabras
-            last_space = fallback.rfind(" ")
-            if last_space > 200:
-                fallback = fallback[:last_space] + "..."
-        return fallback
+
+    logger.warning(
+        "No fue posible generar un resumen extractivo; se devolverá un extracto largo del texto."
+    )
+    return _fallback_excerpt(stripped)

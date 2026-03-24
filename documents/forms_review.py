@@ -1,5 +1,6 @@
 from django import forms
 from .models import Document, DocumentMetadata, DocumentType
+from .services.document_types import get_active_document_types_queryset
 
 
 class DocumentReviewForm(forms.Form):
@@ -11,7 +12,8 @@ class DocumentReviewForm(forms.Form):
 
     document_type = forms.ModelChoiceField(
         label="Tipo oficial",
-        queryset=DocumentType.objects.filter(is_active=True),
+        queryset=DocumentType.objects.none(),
+        empty_label="Selecciona un tipo",
         widget=forms.Select(attrs={"class": "form-select"})
     )
 
@@ -59,6 +61,10 @@ class DocumentReviewForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={"class": "form-control", "rows": 3})
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["document_type"].queryset = get_active_document_types_queryset()
 
     def apply_to_models(self, doc: Document, meta: DocumentMetadata):
         doc.title = (self.cleaned_data.get("title") or "").strip()
